@@ -37,9 +37,24 @@ public class AuthenticationController {
         try {
             return new ResponseEntity<>(authService.authenticate(request), HttpStatus.OK);
         } catch (BadCredentialsException e) {
-            return new ResponseEntity<>(new AuthenticationResponse(false, null), HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(
+                    AuthenticationResponse.builder()
+                            .success(false)
+                            .token(null)
+                            .fullname(null)
+                            .email(null)
+                            .roles(null)
+                            .build(),
+                    HttpStatus.UNAUTHORIZED
+            );
         } catch (Exception e) {
-            return new ResponseEntity<>(new AuthenticationResponse(false, null), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(AuthenticationResponse.builder()
+                    .success(false)
+                    .token(null)
+                    .fullname(null)
+                    .email(null)
+                    .roles(null)
+                    .build(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
