@@ -1,0 +1,1122 @@
+import React, { useState, useEffect } from 'react';
+import { Search, Heart, MessageSquare, Bookmark, Share2, Edit3, Trash2, ChevronLeft, Menu, X, User, Moon, Sun, Filter, Rss, Tag, Calendar, Clock, Send, Plus, Save } from 'lucide-react';
+
+const BloggingPlatform = () => {
+  // Theme state
+  const [darkMode, setDarkMode] = useState(false);
+  
+  // State for blog posts and form
+  const [posts, setPosts] = useState([
+    {
+      id: 1,
+      title: "Getting Started with React",
+      subtitle: "Your journey into the world of component-based UI development",
+      content: "React is a JavaScript library for building user interfaces. It's declarative, efficient, and flexible. React makes it painless to create interactive UIs. Design simple views for each state in your application, and React will efficiently update and render just the right components when your data changes.\n\nDeclarative views make your code more predictable and easier to debug. Build encapsulated components that manage their own state, then compose them to make complex UIs. Since component logic is written in JavaScript instead of templates, you can easily pass rich data through your app and keep state out of the DOM.",
+      author: "Jane Doe",
+      authorAvatar: "/api/placeholder/50/50",
+      readTime: "5 min read",
+      date: "March 20, 2025",
+      likes: 24,
+      comments: 8,
+      bookmarks: 12,
+      shares: 5,
+      image: "/api/placeholder/800/400",
+      featured: true,
+      tags: ["React", "JavaScript", "Web Development", "Frontend"],
+      category: "Programming"
+    },
+    {
+      id: 2,
+      title: "The Power of CSS Grid",
+      subtitle: "Designing complex layouts made simple with grid-based systems",
+      content: "CSS Grid Layout is a two-dimensional grid system that can handle both columns and rows. It enables web developers to create complex layouts with ease.\n\nCSS Grid Layout (also known as 'Grid'), is a two-dimensional grid-based layout system that aims to do nothing less than completely change the way we design grid-based user interfaces. CSS has always been used to lay out our web pages, but it's never done a very good job of it. First, we used tables, then floats, positioning and inline-block, but all of these methods were essentially hacks and left out a lot of important functionality (vertical centering, for instance).\n\nThe Grid Layout Module offers a grid-based layout system, with rows and columns, making it easier to design web pages without having to use floats and positioning. Items are placed in a grid of rows and columns and can span multiple rows or columns. The source order is irrelevant, meaning Grid can place items in any order, providing control over how a page looks on different screen sizes.",
+      author: "John Smith",
+      authorAvatar: "/api/placeholder/50/50",
+      readTime: "7 min read",
+      date: "March 18, 2025",
+      likes: 18,
+      comments: 4,
+      bookmarks: 9,
+      shares: 3,
+      image: "/api/placeholder/800/400",
+      featured: false,
+      tags: ["CSS", "Web Design", "Frontend", "Responsive Design"],
+      category: "Design"
+    },
+    {
+      id: 3,
+      title: "Machine Learning for Beginners",
+      subtitle: "A gentle introduction to the world of AI and machine learning algorithms",
+      content: "Machine learning is revolutionizing how we interact with technology and data. This guide explains the fundamentals for beginners.\n\nMachine learning is a field of study that gives computers the ability to learn without being explicitly programmed. It focuses on the development of computer programs that can access data and use it to learn for themselves. The process of learning begins with observations or data, such as examples, direct experience, or instruction, in order to look for patterns in data and make better decisions in the future based on the examples that we provide. The primary aim is to allow the computers to learn automatically without human intervention or assistance and adjust actions accordingly.",
+      author: "Sarah Johnson",
+      authorAvatar: "/api/placeholder/50/50",
+      readTime: "10 min read",
+      date: "March 15, 2025",
+      likes: 42,
+      comments: 16,
+      bookmarks: 28,
+      shares: 14,
+      image: "/api/placeholder/800/400",
+      featured: true,
+      tags: ["Machine Learning", "AI", "Data Science", "Programming"],
+      category: "Technology"
+    }
+  ]);
+  
+  const [formData, setFormData] = useState({
+    title: "",
+    subtitle: "",
+    content: "",
+    author: "",
+    tags: "",
+    category: "",
+    image: null
+  });
+  
+  const [activePost, setActivePost] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentView, setCurrentView] = useState("list"); // list, create, view
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [commentText, setCommentText] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [notification, setNotification] = useState(null);
+  
+  // Categories
+  const categories = ["Programming", "Design", "Technology", "Career", "Productivity"];
+  
+  // Comments state
+  const [comments, setComments] = useState([
+    { id: 1, postId: 1, author: "Lisa Chen", content: "Great introduction to React! Looking forward to more content like this.", date: "March 21, 2025", likes: 3 },
+    { id: 2, postId: 1, author: "Mark Wilson", content: "This helped me understand React hooks a lot better. Thanks for sharing!", date: "March 20, 2025", likes: 5 },
+    { id: 3, postId: 2, author: "Alex Johnson", content: "CSS Grid has completely changed how I approach layouts. Great article!", date: "March 19, 2025", likes: 2 }
+  ]);
+  
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  };
+  
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+  
+  // Show notification
+  const showNotification = (message, type = "success") => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+  
+  // Handle form submission
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    const newPost = {
+      id: isEditing ? activePost.id : posts.length + 1,
+      title: formData.title,
+      subtitle: formData.subtitle,
+      content: formData.content,
+      author: formData.author || "Anonymous",
+      authorAvatar: "/api/placeholder/50/50",
+      readTime: `${Math.max(1, Math.ceil(formData.content.split(' ').length / 200))} min read`,
+      date: new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
+      likes: isEditing ? activePost.likes : 0,
+      comments: isEditing ? activePost.comments : 0,
+      bookmarks: isEditing ? activePost.bookmarks : 0,
+      shares: isEditing ? activePost.shares : 0,
+      image: "/api/placeholder/800/400", // In a real app, we'd handle image uploads
+      featured: false,
+      tags: formData.tags.split(',').map(tag => tag.trim()),
+      category: formData.category
+    };
+    
+    if (isEditing) {
+      setPosts(posts.map(post => post.id === activePost.id ? newPost : post));
+      setIsEditing(false);
+      showNotification("Post updated successfully!");
+    } else {
+      setPosts([...posts, newPost]);
+      showNotification("Post published successfully!");
+    }
+    
+    // Reset form
+    setFormData({
+      title: "",
+      subtitle: "",
+      content: "",
+      author: "",
+      tags: "",
+      category: "",
+      image: null
+    });
+    
+    setCurrentView("list");
+  };
+  
+  // Handle post deletion
+  const handleDelete = (id) => {
+    setPosts(posts.filter(post => post.id !== id));
+    if (activePost && activePost.id === id) {
+      setActivePost(null);
+      setCurrentView("list");
+    }
+    showNotification("Post deleted successfully!");
+  };
+  
+  // Handle post editing
+  const handleEdit = (post) => {
+    setFormData({
+      title: post.title,
+      subtitle: post.subtitle || "",
+      content: post.content,
+      author: post.author,
+      tags: post.tags.join(', '),
+      category: post.category || ""
+    });
+    setActivePost(post);
+    setIsEditing(true);
+    setCurrentView("create");
+  };
+  
+  // Handle post liking
+  const handleLike = (id) => {
+    setPosts(posts.map(post => 
+      post.id === id ? { ...post, likes: post.likes + 1 } : post
+    ));
+    
+    if (activePost && activePost.id === id) {
+      setActivePost({ ...activePost, likes: activePost.likes + 1 });
+    }
+  };
+  
+  // Handle post bookmarking
+  const handleBookmark = (id) => {
+    setPosts(posts.map(post => 
+      post.id === id ? { ...post, bookmarks: post.bookmarks + 1 } : post
+    ));
+    
+    if (activePost && activePost.id === id) {
+      setActivePost({ ...activePost, bookmarks: activePost.bookmarks + 1 });
+    }
+    
+    showNotification("Post saved to bookmarks!");
+  };
+  
+  // Handle post sharing
+  const handleShare = (id) => {
+    setPosts(posts.map(post => 
+      post.id === id ? { ...post, shares: post.shares + 1 } : post
+    ));
+    
+    if (activePost && activePost.id === id) {
+      setActivePost({ ...activePost, shares: activePost.shares + 1 });
+    }
+    
+    showNotification("Post shared successfully!");
+  };
+  
+  // Add comment
+  const handleAddComment = (postId) => {
+    if (!commentText.trim()) return;
+    
+    const newComment = {
+      id: comments.length + 1,
+      postId,
+      author: "You",
+      content: commentText,
+      date: new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
+      likes: 0
+    };
+    
+    setComments([...comments, newComment]);
+    
+    // Update comment count on post
+    setPosts(posts.map(post => 
+      post.id === postId ? { ...post, comments: post.comments + 1 } : post
+    ));
+    
+    if (activePost && activePost.id === postId) {
+      setActivePost({ ...activePost, comments: activePost.comments + 1 });
+    }
+    
+    setCommentText("");
+    showNotification("Comment added successfully!");
+  };
+  
+  // Like a comment
+  const handleLikeComment = (commentId) => {
+    setComments(comments.map(comment => 
+      comment.id === commentId ? { ...comment, likes: comment.likes + 1 } : comment
+    ));
+  };
+  
+  // View a specific post
+  const viewPost = (post) => {
+    setActivePost(post);
+    setCurrentView("view");
+    setCommentText("");
+    window.scrollTo(0, 0);
+  };
+  
+  // Filter posts by tag
+  const filterByTag = (tag) => {
+    setActiveFilter(tag);
+  };
+  
+  // Filter posts by category
+  const filterByCategory = (category) => {
+    setActiveFilter(category);
+  };
+  
+  // Reset filters
+  const resetFilters = () => {
+    setActiveFilter("all");
+    setSearchQuery("");
+  };
+  
+  // Filter and search posts
+  const filteredPosts = posts.filter(post => {
+    // Search filter
+    const matchesSearch = searchQuery === "" || 
+      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    // Tag/category filter
+    const matchesFilter = activeFilter === "all" || 
+      post.tags.includes(activeFilter) ||
+      post.category === activeFilter;
+    
+    return matchesSearch && matchesFilter;
+  });
+  
+  // Get post comments
+  const getPostComments = (postId) => {
+    return comments.filter(comment => comment.postId === postId);
+  };
+  
+  // Get featured posts
+  const featuredPosts = posts.filter(post => post.featured);
+  
+  // Get all unique tags
+  const allTags = [...new Set(posts.flatMap(post => post.tags))];
+
+  return (
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'} transition-colors duration-200`}>
+      {/* Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+          {notification.message}
+        </div>
+      )}
+      
+      {/* Header */}
+      <header className={`sticky top-0 z-30 ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold">
+                <span className="text-blue-500">Write</span>Wave
+              </h1>
+            </div>
+            
+            <div className="hidden md:flex items-center space-x-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search articles..."
+                  className={`w-64 pl-10 pr-4 py-2 rounded-full ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800'}`}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              </div>
+              
+              <button
+                className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                onClick={toggleDarkMode}
+              >
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+              
+              <button
+                className={`px-4 py-2 rounded-full ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white flex items-center`}
+                onClick={() => {
+                  setFormData({
+                    title: "",
+                    subtitle: "",
+                    content: "",
+                    author: "",
+                    tags: "",
+                    category: "",
+                    image: null
+                  });
+                  setIsEditing(false);
+                  setCurrentView("create");
+                }}
+              >
+                <Plus size={18} className="mr-1" /> New Post
+              </button>
+            </div>
+            
+            <div className="md:hidden flex items-center">
+              <button
+                className={`p-2 rounded-md ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className={`md:hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} py-4 px-4 shadow-md`}>
+            <div className="relative mb-4">
+              <input
+                type="text"
+                placeholder="Search articles..."
+                className={`w-full pl-10 pr-4 py-2 rounded-full ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800'}`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            </div>
+            
+            <div className="flex flex-col space-y-2">
+              <button
+                className={`px-4 py-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} flex items-center justify-center`}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setCurrentView("list");
+                }}
+              >
+                Home
+              </button>
+              
+              <button
+                className={`px-4 py-2 rounded-full ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white flex items-center justify-center`}
+                onClick={() => {
+                  setFormData({
+                    title: "",
+                    subtitle: "",
+                    content: "",
+                    author: "",
+                    tags: "",
+                    category: "",
+                    image: null
+                  });
+                  setIsEditing(false);
+                  setCurrentView("create");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <Plus size={18} className="mr-1" /> New Post
+              </button>
+              
+              <button
+                className={`px-4 py-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} flex items-center justify-center`}
+                onClick={toggleDarkMode}
+              >
+                {darkMode ? "Light Mode" : "Dark Mode"}
+                {darkMode ? <Sun size={18} className="ml-2" /> : <Moon size={18} className="ml-2" />}
+              </button>
+            </div>
+          </div>
+        )}
+      </header>
+      
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {currentView === "list" && (
+          <div>
+            {/* Filters section */}
+            <div className={`mb-8 p-4 rounded-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold flex items-center">
+                  <Filter size={18} className="mr-2" /> 
+                  Filters
+                </h3>
+                {activeFilter !== "all" && (
+                  <button 
+                    onClick={resetFilters}
+                    className={`text-sm px-3 py-1 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+              
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setActiveFilter("all")}
+                  className={`px-3 py-1 text-sm rounded-full transition-colors ${activeFilter === "all" 
+                    ? `${darkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'}`
+                    : `${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`
+                  }`}
+                >
+                  All Posts
+                </button>
+                
+                {categories.map(category => (
+                  <button
+                    key={category}
+                    onClick={() => filterByCategory(category)}
+                    className={`px-3 py-1 text-sm rounded-full transition-colors ${activeFilter === category 
+                      ? `${darkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'}`
+                      : `${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+              
+              <div className="mt-4">
+                <h4 className="text-sm font-medium mb-2 flex items-center">
+                  <Tag size={14} className="mr-1" /> Popular Tags
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {allTags.slice(0, 6).map(tag => (
+                    <button
+                      key={tag}
+                      onClick={() => filterByTag(tag)}
+                      className={`px-2 py-1 text-xs rounded-full ${activeFilter === tag
+                        ? `${darkMode ? 'bg-green-600 text-white' : 'bg-green-500 text-white'}`
+                        : `${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`
+                      }`}
+                    >
+                      #{tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Featured posts */}
+            {featuredPosts.length > 0 && activeFilter === "all" && !searchQuery && (
+              <div className="mb-12">
+                <h2 className="text-2xl font-bold mb-6 flex items-center">
+                  <Rss size={24} className="mr-2 text-blue-500" /> 
+                  Featured Stories
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {featuredPosts.slice(0, 2).map(post => (
+                    <div 
+                      key={post.id} 
+                      className={`rounded-lg overflow-hidden shadow-lg transition-transform hover:translate-y-[-5px] ${darkMode ? 'bg-gray-800' : 'bg-white'}`}
+                    >
+                      <img 
+                        src={post.image} 
+                        alt={post.title} 
+                        className="w-full h-48 object-cover"
+                      />
+                      <div className="p-5">
+                        <span className={`inline-block px-3 py-1 text-xs rounded-full mb-3 ${darkMode ? 'bg-blue-600' : 'bg-blue-100 text-blue-800'}`}>
+                          {post.category}
+                        </span>
+                        <h3 className="text-xl font-bold mb-2">{post.title}</h3>
+                        <p className={`mb-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {post.subtitle}
+                        </p>
+                        
+                        <div className={`flex items-center mb-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          <img 
+                            src={post.authorAvatar} 
+                            alt={post.author}
+                            className="w-8 h-8 rounded-full mr-2" 
+                          />
+                          <span>{post.author}</span>
+                          <span className="mx-2">•</span>
+                          <Calendar size={14} className="mr-1" />
+                          <span>{post.date}</span>
+                          <span className="mx-2">•</span>
+                          <Clock size={14} className="mr-1" />
+                          <span>{post.readTime}</span>
+                        </div>
+                        
+                        <button
+                          onClick={() => viewPost(post)}
+                          className={`w-full py-2 px-4 rounded-full ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white font-medium transition-colors`}
+                        >
+                          Read Article
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* All posts */}
+            <div>
+              <h2 className="text-2xl font-bold mb-6">
+                {activeFilter === "all" ? "Latest Articles" : `Articles: ${activeFilter}`}
+                <span className="text-sm font-normal ml-2 text-gray-500">({filteredPosts.length} posts)</span>
+              </h2>
+              
+              {filteredPosts.length === 0 ? (
+                <div className={`text-center py-16 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow`}>
+                  <p className="text-lg">No posts found matching your criteria.</p>
+                  <button
+                    onClick={resetFilters}
+                    className={`mt-4 px-4 py-2 rounded-full ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
+                  >
+                    Reset Filters
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {filteredPosts.map(post => (
+                    <div 
+                      key={post.id} 
+                      className={`rounded-lg overflow-hidden shadow transition-transform hover:translate-y-[-5px] ${darkMode ? 'bg-gray-800' : 'bg-white'}`}
+                    >
+                      <div className="relative">
+                        <img 
+                          src={post.image} 
+                          alt={post.title} 
+                          className="w-full h-40 object-cover"
+                        />
+                        {post.category && (
+                          <span className={`absolute top-3 left-3 px-2 py-1 text-xs rounded-full ${darkMode ? 'bg-blue-600' : 'bg-blue-100 text-blue-800'}`}>
+                            {post.category}
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <h3 className="text-lg font-bold mb-2 line-clamp-2">{post.title}</h3>
+                        <p className={`mb-3 text-sm line-clamp-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {post.subtitle || post.content.substring(0, 120) + '...'}
+                        </p>
+                        
+                        <div className={`flex items-center mb-3 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          <Calendar size={12} className="mr-1" />
+                          <span>{post.date}</span>
+                          <span className="mx-2">•</span>
+                          <Clock size={12} className="mr-1" />
+                          <span>{post.readTime}</span>
+                        </div>
+                        
+                        <div className="mb-4 flex flex-wrap gap-1">
+                          {post.tags.slice(0, 3).map(tag => (
+                            <span 
+                              key={tag} 
+                              className={`inline-block px-2 py-1 text-xs rounded-full cursor-pointer ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                filterByTag(tag);
+                              }}
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                          {post.tags.length > 3 && (
+                            <span className={`inline-block px-2 py-1 text-xs rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                              +{post.tags.length - 3}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <button
+                          onClick={() => viewPost(post)}
+                          className={`w-full py-2 px-4 rounded-full ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white font-medium transition-colors text-sm`}
+                        >
+                          Read Article
+                        </button>
+                        
+                        <div className={`mt-4 pt-3 border-t flex justify-between items-center ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                          <div className="flex items-center space-x-4">
+                            <button 
+                              className="flex items-center text-sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleLike(post.id);
+                              }}
+                            >
+                              <Heart size={16} className={`mr-1 ${post.likes > 0 ? 'text-red-500 fill-red-500' : ''}`} />
+                              <span>{post.likes}</span>
+                            </button>
+                            
+                            <button className="flex items-center text-sm">
+                              <MessageSquare size={16} className="mr-1" />
+                              <span>{post.comments}</span>
+                            </button>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <button 
+                              className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleBookmark(post.id);
+                              }}
+                            >
+                              <Bookmark size={16} className={post.bookmarks > 0 ? 'text-blue-500' : ''} />
+                            </button>
+                            
+                            <button 
+                              className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleShare(post.id);
+                              }}
+                            >
+                              <Share2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {currentView === "create" && (
+          <div className={`rounded-lg shadow-lg p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="mb-6 flex items-center">
+              <button 
+                className="mr-4 text-blue-500 hover:text-blue-600"
+                onClick={() => setCurrentView("list")}
+              >
+                <ChevronLeft size={24} />
+              </button>
+              <h2 className="text-2xl font-bold">
+                {isEditing ? "Edit Article" : "Create New Article"}
+              </h2>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Title *
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
+                  placeholder="Enter an engaging title"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Subtitle
+                </label>
+                <input
+                  type="text"
+                  name="subtitle"
+                  value={formData.subtitle}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
+                  placeholder="A brief description of your article"
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Author
+                  </label>
+                  <input
+                    type="text"
+                    name="author"
+                    value={formData.author}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
+                    placeholder="Your name"
+                  />
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Category
+                  </label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Cover Image
+                </label>
+                <div className={`border-2 border-dashed rounded-lg p-6 text-center ${darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-300 bg-gray-50'}`}>
+                  <div className="flex flex-col items-center justify-center">
+                    <p className={`mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Drag and drop an image, or click to select
+                    </p>
+                    <button
+                      type="button"
+                      className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'}`}
+                    >
+                      Select Image
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Content *
+                </label>
+                <textarea
+                  name="content"
+                  value={formData.content}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
+                  rows="12"
+                  placeholder="Write your article here..."
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Tags (comma separated)
+                </label>
+                <input
+                  type="text"
+                  name="tags"
+                  value={formData.tags}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
+                  placeholder="e.g., Technology, Programming, Web Development"
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  className={`px-6 py-3 rounded-lg ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white font-medium flex items-center`}
+                >
+                  <Save size={18} className="mr-2" />
+                  {isEditing ? "Update Article" : "Publish Article"}
+                </button>
+                
+                <button
+                  type="button"
+                  className={`px-6 py-3 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} font-medium`}
+                  onClick={() => setCurrentView("list")}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+        
+        {currentView === "view" && activePost && (
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+            <div className="md:col-span-8">
+              <button 
+                className="mb-4 text-blue-500 hover:text-blue-600 flex items-center"
+                onClick={() => setCurrentView("list")}
+              >
+                <ChevronLeft size={20} className="mr-1" /> Back to all posts
+              </button>
+              
+              <article className={`rounded-lg shadow-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <img 
+                  src={activePost.image} 
+                  alt={activePost.title} 
+                  className="w-full h-64 object-cover"
+                />
+                
+                <div className="p-6">
+                  {activePost.category && (
+                    <span className={`inline-block px-3 py-1 text-xs rounded-full mb-4 ${darkMode ? 'bg-blue-600' : 'bg-blue-100 text-blue-800'}`}>
+                      {activePost.category}
+                    </span>
+                  )}
+                  
+                  <h1 className="text-3xl font-bold mb-3">{activePost.title}</h1>
+                  
+                  {activePost.subtitle && (
+                    <p className={`text-xl mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {activePost.subtitle}
+                    </p>
+                  )}
+                  
+                  <div className={`flex items-center mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <img 
+                      src={activePost.authorAvatar} 
+                      alt={activePost.author}
+                      className="w-10 h-10 rounded-full mr-3" 
+                    />
+                    <div>
+                      <p className="font-medium">{activePost.author}</p>
+                      <div className="flex items-center text-sm">
+                        <Calendar size={14} className="mr-1" />
+                        <span>{activePost.date}</span>
+                        <span className="mx-2">•</span>
+                        <Clock size={14} className="mr-1" />
+                        <span>{activePost.readTime}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className={`prose max-w-none mb-8 ${darkMode ? 'prose-invert' : ''}`}>
+                    {activePost.content.split('\n\n').map((paragraph, idx) => (
+                      <p key={idx} className="mb-4">
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
+                  
+                  <div className="mb-6">
+                    {activePost.tags.map(tag => (
+                      <span 
+                        key={tag} 
+                        className={`inline-block px-3 py-1 text-sm rounded-full mr-2 mb-2 cursor-pointer ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
+                        onClick={() => {
+                          filterByTag(tag);
+                          setCurrentView("list");
+                        }}
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                  
+                  <div className={`flex items-center justify-between border-t pt-6 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <div className="flex items-center space-x-4">
+                      <button 
+                        className={`flex items-center space-x-1 px-4 py-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
+                        onClick={() => handleLike(activePost.id)}
+                      >
+                        <Heart size={18} className={activePost.likes > 0 ? 'text-red-500 fill-red-500' : ''} />
+                        <span>{activePost.likes}</span>
+                      </button>
+                      
+                      <button 
+                        className={`flex items-center space-x-1 px-4 py-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
+                        onClick={() => handleBookmark(activePost.id)}
+                      >
+                        <Bookmark size={18} className={activePost.bookmarks > 0 ? 'text-blue-500' : ''} />
+                        <span>{activePost.bookmarks}</span>
+                      </button>
+                      
+                      <button 
+                        className={`flex items-center space-x-1 px-4 py-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
+                        onClick={() => handleShare(activePost.id)}
+                      >
+                        <Share2 size={18} />
+                        <span>{activePost.shares}</span>
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <button 
+                        className={`px-4 py-2 rounded-full ${darkMode ? 'bg-green-600 hover:bg-green-700' : 'bg-green-500 hover:bg-green-600'} text-white flex items-center`}
+                        onClick={() => handleEdit(activePost)}
+                      >
+                        <Edit3 size={16} className="mr-1" /> Edit
+                      </button>
+                      
+                      <button 
+                        className={`px-4 py-2 rounded-full ${darkMode ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'} text-white flex items-center`}
+                        onClick={() => handleDelete(activePost.id)}
+                      >
+                        <Trash2 size={16} className="mr-1" /> Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Comments section */}
+                <div className={`border-t px-6 py-8 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <h3 className="text-xl font-bold mb-6">
+                    Comments ({getPostComments(activePost.id).length})
+                  </h3>
+                  
+                  <div className="mb-8">
+                    <div className="flex gap-3">
+                      <img 
+                        src="/api/placeholder/40/40" 
+                        alt="Your Avatar"
+                        className="w-10 h-10 rounded-full" 
+                      />
+                      <div className="flex-1">
+                        <textarea
+                          placeholder="Add your comment..."
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          className={`w-full p-3 rounded-lg border focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
+                          rows="3"
+                        />
+                        <div className="flex justify-end mt-2">
+                          <button 
+                            className={`px-4 py-2 rounded-full ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white flex items-center disabled:opacity-50`}
+                            onClick={() => handleAddComment(activePost.id)}
+                            disabled={!commentText.trim()}
+                          >
+                            <Send size={16} className="mr-2" /> Post Comment
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    {getPostComments(activePost.id).length > 0 ? (
+                      getPostComments(activePost.id).map(comment => (
+                        <div key={comment.id} className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-start">
+                              <img 
+                                src="/api/placeholder/40/40" 
+                                alt={comment.author}
+                                className="w-10 h-10 rounded-full mr-3" 
+                              />
+                              <div>
+                                <p className="font-medium">{comment.author}</p>
+                                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                  {comment.date}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <p className="mt-3 mb-3">{comment.content}</p>
+                          
+                          <div className="flex items-center">
+                            <button 
+                              className="flex items-center text-sm mr-4"
+                              onClick={() => handleLikeComment(comment.id)}
+                            >
+                              <Heart size={14} className={`mr-1 ${comment.likes > 0 ? 'text-red-500 fill-red-500' : ''}`} />
+                              <span>{comment.likes}</span>
+                            </button>
+                            <button className="text-sm">Reply</button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <p>Be the first to comment on this article!</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </article>
+            </div>
+            
+            <div className="md:col-span-4">
+              {/* Author card */}
+              <div className={`rounded-lg shadow-lg p-6 mb-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <h3 className="text-lg font-bold mb-4">About the Author</h3>
+                <div className="flex items-center mb-4">
+                  <img 
+                    src={activePost.authorAvatar} 
+                    alt={activePost.author}
+                    className="w-16 h-16 rounded-full mr-4" 
+                  />
+                  <div>
+                    <p className="font-medium text-lg">{activePost.author}</p>
+                    <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Content Creator
+                    </p>
+                  </div>
+                </div>
+                <p className={`mb-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Professional writer specializing in {activePost.category || "various topics"} with over 5 years of experience in digital content creation.
+                </p>
+                <button className={`w-full py-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} font-medium`}>
+                  View Profile
+                </button>
+              </div>
+              
+              {/* Related articles */}
+              <div className={`rounded-lg shadow-lg p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <h3 className="text-lg font-bold mb-4">Related Articles</h3>
+                <div className="space-y-4">
+                  {posts
+                    .filter(post => 
+                      post.id !== activePost.id && 
+                      (post.category === activePost.category || 
+                       post.tags.some(tag => activePost.tags.includes(tag)))
+                    )
+                    .slice(0, 3)
+                    .map(post => (
+                      <div 
+                        key={post.id} 
+                        className={`flex items-start space-x-3 p-3 rounded-lg cursor-pointer ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                        onClick={() => viewPost(post)}
+                      >
+                        <img 
+                          src={post.image} 
+                          alt={post.title}
+                          className="w-16 h-16 rounded object-cover" 
+                        />
+                        <div>
+                          <h4 className="font-medium line-clamp-2">{post.title}</h4>
+                          <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {post.readTime}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+      
+      <footer className={`py-8 mt-16 ${darkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-4 md:mb-0">
+              <h2 className="text-xl font-bold">
+                <span className="text-blue-500">Write</span>Wave
+              </h2>
+              <p className="text-sm mt-1">The modern blogging platform</p>
+            </div>
+            
+            <div className="flex space-x-4">
+              <a href="#" className="hover:text-blue-500">Home</a>
+              <a href="#" className="hover:text-blue-500">Features</a>
+              <a href="#" className="hover:text-blue-500">About</a>
+              <a href="#" className="hover:text-blue-500">Contact</a>
+            </div>
+          </div>
+          <div className="mt-8 pt-4 border-t text-center text-sm">
+            <p>© 2025 WriteWave. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default BloggingPlatform;
