@@ -1,7 +1,10 @@
 package com.alibou.book.user;
 
 
+import com.alibou.book.comment.Comment;
+import com.alibou.book.post.Post;
 import com.alibou.book.role.Role;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.cglib.core.Local;
@@ -14,8 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.security.Principal;
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Getter
@@ -35,19 +37,44 @@ public class User implements UserDetails, Principal {
     private String lastname;
     private LocalDate dateOfBirth;
     private String email;
+
+    @JsonIgnore
     private String password;
+
+    @JsonIgnore
     private boolean accountLocked;
+
+    @JsonIgnore
     private boolean enabled;
 
     @ManyToMany(fetch = FetchType.EAGER)
     private List<Role> roles;
 
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL,  fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Post> posts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL,  fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Comment> comments = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_bookmarks",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "post_id")
+    )
+    @JsonIgnore
+    private Set<Post> bookmarkedPosts = new HashSet<>();
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
+    @JsonIgnore
     private LocalDate createdDate;
 
     @LastModifiedDate
     @Column(insertable = false)
+    @JsonIgnore
     private LocalDate lastModifiedDate;
 
 
