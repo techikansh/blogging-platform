@@ -10,7 +10,8 @@ interface PostCardProps {
   onLike: (id: number) => void;
   onBookmark: (id: number) => void;
   onShare: (id: number) => void;
-  onTagClick: (tag: string) => void;
+  onTagClick?: (tag: string) => void;
+  isBookmarked?: boolean;
 }
 
 const PostCard: React.FC<PostCardProps> = ({ 
@@ -20,7 +21,8 @@ const PostCard: React.FC<PostCardProps> = ({
   onLike, 
   onBookmark, 
   onShare,
-  onTagClick
+  onTagClick,
+  isBookmarked
 }) => {
   const navigate = useNavigate();
 
@@ -30,6 +32,17 @@ const PostCard: React.FC<PostCardProps> = ({
     // Then navigate to the post detail page
     navigate(`/post/${post.id}`);
   };
+  
+  const handleTagClick = (tag: string) => {
+    if (onTagClick) {
+      onTagClick(tag);
+    }
+  };
+
+  // Format author name
+  const authorName = post.author ? 
+    `${post.author.firstName} ${post.author.lastName}` : 
+    'Unknown Author';
 
   return (
     <div 
@@ -37,7 +50,7 @@ const PostCard: React.FC<PostCardProps> = ({
     >
       <div className="relative">
         <img 
-          src={post.image} 
+          src={post.imageUrl} 
           alt={post.title} 
           className="w-full h-40 object-cover"
         />
@@ -55,7 +68,7 @@ const PostCard: React.FC<PostCardProps> = ({
         
         <div className={`flex items-center mb-3 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
           <Calendar size={12} className="mr-1" />
-          <span>{post.date}</span>
+          <span>{post.createdDate}</span>
           <span className="mx-2">•</span>
           <Clock size={12} className="mr-1" />
           <span>{post.readTime}</span>
@@ -68,7 +81,7 @@ const PostCard: React.FC<PostCardProps> = ({
               className={`inline-block px-2 py-1 text-xs rounded-full cursor-pointer ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
               onClick={(e) => {
                 e.stopPropagation();
-                onTagClick(tag);
+                handleTagClick(tag);
               }}
             >
               #{tag}
@@ -114,8 +127,12 @@ const PostCard: React.FC<PostCardProps> = ({
                 e.stopPropagation();
                 onBookmark(post.id);
               }}
+              title={isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
             >
-              <Bookmark size={16} className={post.bookmarks > 0 ? 'text-blue-500' : ''} />
+              <Bookmark 
+                size={16} 
+                className={isBookmarked || post.bookmarks > 0 ? 'text-blue-500 fill-blue-500' : ''} 
+              />
             </button>
             
             <button 

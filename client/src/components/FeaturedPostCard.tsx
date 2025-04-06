@@ -1,7 +1,6 @@
 import React from 'react';
-import { Calendar, Clock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { Post } from '../types/Post';
+import { Calendar, Clock, ArrowRight } from 'lucide-react';
 
 interface FeaturedPostCardProps {
   post: Post;
@@ -10,53 +9,50 @@ interface FeaturedPostCardProps {
 }
 
 const FeaturedPostCard: React.FC<FeaturedPostCardProps> = ({ post, darkMode, onView }) => {
-  const navigate = useNavigate();
-
-  const handleReadArticle = () => {
-    // First call the onView function to maintain current functionality
-    onView(post);
-    // Then navigate to the post detail page
-    navigate(`/post/${post.id}`);
-  };
-
+  // Format author name
+  const authorName = post.author ? 
+    `${post.author.firstName} ${post.author.lastName}` : 
+    'Unknown Author';
+    
   return (
     <div 
-      className={`rounded-lg overflow-hidden shadow-lg transition-transform hover:translate-y-[-5px] ${darkMode ? 'bg-gray-800' : 'bg-white'}`}
+      className={`relative overflow-hidden rounded-xl shadow-lg cursor-pointer transition-transform hover:translate-y-[-5px] ${darkMode ? 'bg-gray-800' : 'bg-white'}`}
+      onClick={() => onView(post)}
     >
-      <img 
-        src={post.image} 
-        alt={post.title} 
-        className="w-full h-48 object-cover"
-      />
-      <div className="p-5">
-        <span className={`inline-block px-3 py-1 text-xs rounded-full mb-3 ${darkMode ? 'bg-blue-600' : 'bg-blue-100 text-blue-800'}`}>
-          {post.category}
-        </span>
-        <h3 className="text-xl font-bold mb-2">{post.title}</h3>
-        <p className={`mb-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          {post.subtitle}
-        </p>
+      <div className="relative h-60 overflow-hidden">
+        <img 
+          src={post.imageUrl} 
+          alt={post.title} 
+          className="w-full h-full object-cover transition-transform hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+      </div>
+      
+      <div className="absolute bottom-0 left-0 right-0 p-6">
+        {post.category && (
+          <span className={`inline-block px-3 py-1 mb-2 text-xs font-medium rounded-full ${darkMode ? 'bg-blue-600' : 'bg-blue-100 text-blue-800'}`}>
+            {post.category}
+          </span>
+        )}
         
-        <div className={`flex items-center mb-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          <img 
-            src={post.authorAvatar} 
-            alt={post.author}
-            className="w-8 h-8 rounded-full mr-2" 
-          />
-          <span>{post.author}</span>
+        <h3 className="text-xl font-bold text-white mb-2">{post.title}</h3>
+        
+        <div className="flex items-center text-xs text-white/80 mb-3">
+          <Calendar size={12} className="mr-1" />
+          <span>{post.createdDate}</span>
           <span className="mx-2">•</span>
-          <Calendar size={14} className="mr-1" />
-          <span>{post.date}</span>
-          <span className="mx-2">•</span>
-          <Clock size={14} className="mr-1" />
+          <Clock size={12} className="mr-1" />
           <span>{post.readTime}</span>
         </div>
         
-        <button
-          onClick={handleReadArticle}
-          className={`w-full py-2 px-4 rounded-full ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white font-medium transition-colors`}
+        <button 
+          className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-colors ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onView(post);
+          }}
         >
-          Read Article
+          Read Article <ArrowRight size={16} className="ml-1" />
         </button>
       </div>
     </div>

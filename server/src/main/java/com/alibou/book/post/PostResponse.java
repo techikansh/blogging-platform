@@ -16,4 +16,5 @@ public class PostResponse {
     private String message;
     private List<Object> content;
 
+    // class end
 }

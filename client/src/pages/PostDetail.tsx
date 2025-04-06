@@ -7,7 +7,8 @@ import Comments from '../components/Comments';
 import Notification, { NotificationData } from '../components/Notification';
 import { Post } from '../types/Post';
 import { Comment } from '../types/Comment';
-import { dummyPosts, dummyComments } from '../data/dummyData';
+import { postApi } from '../utils/api';
+import { adaptPostResponse } from '../utils/adapters';
 
 const PostDetail: React.FC = () => {
   const { id } = useParams<{id: string}>();
@@ -18,6 +19,8 @@ const PostDetail: React.FC = () => {
   
   // Post and comments state
   const [post, setPost] = useState<Post | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [relatedPosts, setRelatedPosts] = useState<Post[]>([]);
   
@@ -27,30 +30,39 @@ const PostDetail: React.FC = () => {
   // Load post data
   useEffect(() => {
     if (id) {
-      const postId = parseInt(id);
-      const foundPost = dummyPosts.find(p => p.id === postId);
+      fetchPostById(parseInt(id));
+    }
+  }, [id]);
+  
+  // Fetch post by ID
+  const fetchPostById = async (postId: number) => {
+    try {
+      setLoading(true);
+      const response = await postApi.getPostById(postId);
+      const adaptedPosts = adaptPostResponse(response);
       
-      if (foundPost) {
-        setPost(foundPost);
+      if (adaptedPosts.length > 0) {
+        setPost(adaptedPosts[0]);
         
-        // Load comments
-        const postComments = dummyComments.filter(c => c.postId === postId);
-        setComments(postComments);
+        // TODO: Replace with actual API calls when comment endpoints are available
+        // For now, we'll use empty comments
+        setComments([]);
         
-        // Find related posts (same category or shared tags)
-        const related = dummyPosts.filter(p => 
-          p.id !== postId && 
-          (p.category === foundPost.category || 
-           p.tags.some(tag => foundPost.tags.includes(tag)))
-        ).slice(0, 3);
-        
-        setRelatedPosts(related);
+        // TODO: Fetch related posts when that API is available
+        setRelatedPosts([]);
       } else {
-        // Post not found
+        setError('Post not found');
+        showNotification('Post not found', 'error');
         navigate('/');
       }
+    } catch (err) {
+      console.error('Failed to fetch post:', err);
+      setError('Failed to load post. Please try again later.');
+      showNotification('Failed to load post', 'error');
+    } finally {
+      setLoading(false);
     }
-  }, [id, navigate]);
+  };
   
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -64,32 +76,48 @@ const PostDetail: React.FC = () => {
   
   // Handle new post creation
   const handleNewPost = () => {
-    navigate('/new-post');
+    navigate('/create');
   };
   
   // Handle post liking
-  const handleLike = () => {
+  const handleLike = async () => {
     if (post) {
-      const updatedPost = { ...post, likes: post.likes + 1 };
-      setPost(updatedPost);
+      try {
+        await postApi.likePost(post.id);
+        setPost({ ...post, likes: post.likes + 1 });
+        showNotification("Post liked!");
+      } catch (err) {
+        console.error('Failed to like post:', err);
+        showNotification('Failed to like post', 'error');
+      }
     }
   };
   
   // Handle post bookmarking
-  const handleBookmark = () => {
+  const handleBookmark = async () => {
     if (post) {
-      const updatedPost = { ...post, bookmarks: post.bookmarks + 1 };
-      setPost(updatedPost);
-      showNotification("Post saved to bookmarks!");
+      try {
+        await postApi.bookmarkPost(post.id);
+        setPost({ ...post, bookmarks: post.bookmarks + 1 });
+        showNotification("Post saved to bookmarks!");
+      } catch (err) {
+        console.error('Failed to bookmark post:', err);
+        showNotification('Failed to bookmark post', 'error');
+      }
     }
   };
   
   // Handle post sharing
-  const handleShare = () => {
+  const handleShare = async () => {
     if (post) {
-      const updatedPost = { ...post, shares: post.shares + 1 };
-      setPost(updatedPost);
-      showNotification("Post shared successfully!");
+      try {
+        await postApi.sharePost(post.id);
+        setPost({ ...post, shares: post.shares + 1 });
+        showNotification("Post shared successfully!");
+      } catch (err) {
+        console.error('Failed to share post:', err);
+        showNotification('Failed to share post', 'error');
+      }
     }
   };
   
@@ -102,12 +130,14 @@ const PostDetail: React.FC = () => {
   
   // Handle post deletion
   const handleDelete = () => {
+    // TODO: Implement delete functionality when API is available
     showNotification("Post deleted successfully!");
     navigate('/');
   };
   
   // Add comment
   const handleAddComment = (postId: number, content: string) => {
+    // TODO: Implement comment creation when API is available
     const newComment: Comment = {
       id: comments.length ? Math.max(...comments.map(c => c.id)) + 1 : 1,
       postId,
@@ -132,6 +162,7 @@ const PostDetail: React.FC = () => {
   
   // Like a comment
   const handleLikeComment = (commentId: number) => {
+    // TODO: Implement comment like when API is available
     setComments(comments.map(comment => 
       comment.id === commentId ? { ...comment, likes: comment.likes + 1 } : comment
     ));
@@ -142,17 +173,38 @@ const PostDetail: React.FC = () => {
     navigate(`/post/${postId}`);
   };
   
-  if (!post) {
+  if (loading) {
     return (
       <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
         <Header 
           darkMode={darkMode} 
           toggleDarkMode={toggleDarkMode} 
           onNewPost={handleNewPost}
-          userName="John Doe"
+        />
+        <main className="max-w-6xl mx-auto px-4 py-16 flex justify-center items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </main>
+        <Footer darkMode={darkMode} />
+      </div>
+    );
+  }
+  
+  if (error || !post) {
+    return (
+      <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
+        <Header 
+          darkMode={darkMode} 
+          toggleDarkMode={toggleDarkMode} 
+          onNewPost={handleNewPost}
         />
         <main className="max-w-6xl mx-auto px-4 py-16 text-center">
-          <h2 className="text-2xl font-bold mb-4">Loading...</h2>
+          <h2 className="text-2xl font-bold mb-4">{error || 'Post not found'}</h2>
+          <button
+            onClick={() => navigate('/')}
+            className="px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
+          >
+            Back to Home
+          </button>
         </main>
         <Footer darkMode={darkMode} />
       </div>
@@ -172,7 +224,6 @@ const PostDetail: React.FC = () => {
         darkMode={darkMode} 
         toggleDarkMode={toggleDarkMode} 
         onNewPost={handleNewPost}
-        userName="John Doe"
       />
       
       <main className="max-w-6xl mx-auto px-4 py-8">
@@ -187,7 +238,7 @@ const PostDetail: React.FC = () => {
             
             <article className={`rounded-lg shadow-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
               <img 
-                src={post.image} 
+                src={post.imageUrl} 
                 alt={post.title} 
                 className="w-full h-64 object-cover"
               />
@@ -208,16 +259,14 @@ const PostDetail: React.FC = () => {
                 )}
                 
                 <div className={`flex items-center mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  <img 
-                    src={post.authorAvatar} 
-                    alt={post.author}
-                    className="w-10 h-10 rounded-full mr-3" 
-                  />
+                  <div className={`w-10 h-10 rounded-full mr-3 flex items-center justify-center ${darkMode ? 'bg-blue-600' : 'bg-blue-500'} text-white font-medium`}>
+                    {post.author?.firstName?.charAt(0) || 'A'}
+                  </div>
                   <div>
-                    <p className="font-medium">{post.author}</p>
+                    <p className="font-medium">{post.author ? `${post.author.firstName} ${post.author.lastName}` : 'Anonymous'}</p>
                     <div className="flex items-center text-sm">
                       <Calendar size={14} className="mr-1" />
-                      <span>{post.date}</span>
+                      <span>{post.createdDate}</span>
                       <span className="mx-2">•</span>
                       <Clock size={14} className="mr-1" />
                       <span>{post.readTime}</span>
@@ -259,7 +308,7 @@ const PostDetail: React.FC = () => {
                       className={`flex items-center space-x-1 px-4 py-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}
                       onClick={handleBookmark}
                     >
-                      <Bookmark size={18} className={post.bookmarks > 0 ? 'text-blue-500' : ''} />
+                      <Bookmark size={18} className={post.bookmarks > 0 ? 'text-blue-500 fill-blue-500' : ''} />
                       <span>{post.bookmarks}</span>
                     </button>
                     
@@ -306,13 +355,11 @@ const PostDetail: React.FC = () => {
             <div className={`rounded-lg shadow-lg p-6 mb-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
               <h3 className="text-lg font-bold mb-4">About the Author</h3>
               <div className="flex items-center mb-4">
-                <img 
-                  src={post.authorAvatar} 
-                  alt={post.author}
-                  className="w-16 h-16 rounded-full mr-4" 
-                />
+                <div className={`w-16 h-16 rounded-full mr-4 flex items-center justify-center ${darkMode ? 'bg-blue-600' : 'bg-blue-500'} text-white text-xl font-medium`}>
+                  {post.author?.firstName?.charAt(0) || 'A'}
+                </div>
                 <div>
-                  <p className="font-medium text-lg">{post.author}</p>
+                  <p className="font-medium text-lg">{post.author ? `${post.author.firstName} ${post.author.lastName}` : 'Anonymous'}</p>
                   <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                     Content Creator
                   </p>
@@ -327,30 +374,32 @@ const PostDetail: React.FC = () => {
             </div>
             
             {/* Related articles */}
-            <div className={`rounded-lg shadow-lg p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-              <h3 className="text-lg font-bold mb-4">Related Articles</h3>
-              <div className="space-y-4">
-                {relatedPosts.map(relatedPost => (
-                  <div 
-                    key={relatedPost.id} 
-                    className={`flex items-start space-x-3 p-3 rounded-lg cursor-pointer ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                    onClick={() => viewRelatedPost(relatedPost.id)}
-                  >
-                    <img 
-                      src={relatedPost.image} 
-                      alt={relatedPost.title}
-                      className="w-16 h-16 rounded object-cover" 
-                    />
-                    <div>
-                      <h4 className="font-medium line-clamp-2">{relatedPost.title}</h4>
-                      <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        {relatedPost.readTime}
-                      </p>
+            {relatedPosts.length > 0 && (
+              <div className={`rounded-lg shadow-lg p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <h3 className="text-lg font-bold mb-4">Related Articles</h3>
+                <div className="space-y-4">
+                  {relatedPosts.map(relatedPost => (
+                    <div 
+                      key={relatedPost.id} 
+                      className={`flex items-start space-x-3 p-3 rounded-lg cursor-pointer ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                      onClick={() => viewRelatedPost(relatedPost.id)}
+                    >
+                      <img 
+                        src={relatedPost.imageUrl} 
+                        alt={relatedPost.title}
+                        className="w-16 h-16 rounded object-cover" 
+                      />
+                      <div>
+                        <h4 className="font-medium line-clamp-2">{relatedPost.title}</h4>
+                        <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {relatedPost.readTime}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </main>

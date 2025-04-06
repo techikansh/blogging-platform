@@ -58,7 +58,7 @@ public class User implements UserDetails, Principal {
     @JsonIgnore
     private List<Comment> comments = new ArrayList<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_bookmarks",
             joinColumns = @JoinColumn(name = "user_id"),

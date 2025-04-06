@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Moon, Sun, LogOut, User, Menu, X, Plus } from 'lucide-react';
+import { Search, Moon, Sun, LogOut, User, Menu, X, Plus, BookmarkCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/AuthSlice';
@@ -56,6 +56,14 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleDarkMode, onNewPost }) 
               />
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             </div>
+            
+            <Link
+              to="/bookmarks"
+              className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'} flex items-center justify-center`}
+              title="Bookmarks"
+            >
+              <BookmarkCheck size={20} />
+            </Link>
             
             <button
               className={`p-2 rounded-full ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
@@ -124,6 +132,14 @@ const Header: React.FC<HeaderProps> = ({ darkMode, toggleDarkMode, onNewPost }) 
               onClick={() => setMobileMenuOpen(false)}
             >
               Home
+            </Link>
+            
+            <Link
+              to="/bookmarks"
+              className={`px-4 py-2 rounded-full ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} flex items-center justify-center`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <BookmarkCheck size={18} className="mr-1" /> Bookmarks
             </Link>
             
             <button

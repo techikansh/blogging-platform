@@ -3,16 +3,27 @@ export interface Post {
   title: string;
   subtitle?: string;
   content: string;
-  author: string;
-  authorAvatar: string;
+  author: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    profileImage?: string;
+  };
   readTime: string;
-  date: string;
+  createdDate: string;
   likes: number;
   comments: number;
   bookmarks: number;
   shares: number;
-  image: string;
+  imageUrl: string;
   featured: boolean;
   tags: string[];
   category?: string;
+}
+
+export interface PostResponse {
+  success: boolean;
+  message?: string;
+  content: Post[] | null;
 } 

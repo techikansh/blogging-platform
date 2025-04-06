@@ -39,7 +39,7 @@ const Filters: React.FC<FiltersProps> = ({
       
       <div className="flex flex-wrap gap-2">
         <button
-          onClick={() => onFilterByCategory("all")}
+          onClick={() => onResetFilters()}
           className={`px-3 py-1 text-sm rounded-full transition-colors ${activeFilter === "all" 
             ? `${darkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'}`
             : `${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`

@@ -21,7 +21,7 @@ public class PostController {
     public ResponseEntity<PostResponse>  createPost (@RequestBody @Valid PostRequest request) {
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (currentUser == null) {
-            return new ResponseEntity<>(
+            return new ResponseEntity<>( 
                     new PostResponse(false, "Unauthorized",null),
                     HttpStatus.UNAUTHORIZED
             );
@@ -45,6 +45,43 @@ public class PostController {
 
         return postService.filterPosts(category, tag);
     }
+
+    @GetMapping("get-post/{id}")
+    public ResponseEntity<PostResponse> getPostById(@PathVariable Integer id) {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (currentUser == null) {
+            return new ResponseEntity<>(new PostResponse(false, "Unauthorized",null),
+                    HttpStatus.UNAUTHORIZED
+            );
+        }
+        return postService.getPostById(id);
+    }
+
+    // getting user's bookmarks
+    @GetMapping("get-bookmarks")
+    public ResponseEntity<PostResponse> getBookmarks() {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (currentUser == null) {
+            return new ResponseEntity<>(new PostResponse(false, "Unauthorized",null),
+                    HttpStatus.UNAUTHORIZED
+            );
+        }
+        return postService.getBookmarks(currentUser);
+    }
+
+    // set user's bookmarks
+    @PostMapping("bookmark-post/{id}")
+    public ResponseEntity<PostResponse> bookmarkPost(@PathVariable Integer id) {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (currentUser == null) {
+            return new ResponseEntity<>(new PostResponse(false, "Unauthorized",null),
+                    HttpStatus.UNAUTHORIZED
+            );
+        }
+        return postService.bookmarkPost(id, currentUser);
+    }
+
+
 
 
 

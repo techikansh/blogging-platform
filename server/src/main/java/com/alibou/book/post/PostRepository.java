@@ -14,4 +14,8 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     List<Post> findByTagsIgnoreCase(@Param("tag") String tag);
 
     List<Post> findTop6ByOrderByCreatedDateDesc(); // optional default loading
+
+    @Query("SELECT p FROM User u JOIN u.bookmarkedPosts p WHERE u.id = :userId")
+    List<Post> findBookmarkedPostsByUser(@Param("userId") Integer userId);
+
 }
